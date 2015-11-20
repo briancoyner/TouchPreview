@@ -1,0 +1,16 @@
+.DS_Store
+xcuserdata
+project.xcworkspace/
+*.xccheckout
+
+# automatic backup files
+*~.nib
+*.swp
+
+ObjectiveC.gcno
+
+# AppCode
+.idea/*
+!.idea/codeStyleSettings.xml
+atlassian-ide-plugin.xml
+
