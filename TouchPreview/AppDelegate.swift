@@ -8,19 +8,9 @@ import UIKit
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-    private var previewWindow: PreviewWindow?
-    
-    var window: UIWindow? {
-        get {
-            if let previewWindow = self.previewWindow {
-                return previewWindow
-            } else {
-                self.previewWindow = PreviewWindow()
-                return previewWindow
-            }
-        }
-        set {           
-        }
-    }
+    // Feel free to manage the window how ever you need to in your own app.
+    // For this demo, the `PreviewWindow` is always "on".
+    lazy var window: UIWindow? = {
+        return PreviewWindow()
+    }()
 }
-

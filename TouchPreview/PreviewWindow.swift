@@ -7,30 +7,26 @@ import UIKit
 
 class PreviewWindow: UIWindow {
 
-    // MARK: Private Properties
-    
-    private var forceTouchAvailable = false
-    private var touchesToViews: [UITouch:UIView] = [:]
+    fileprivate var forceTouchAvailable = false
+    fileprivate var touchesToViews: [UITouch:UIView] = [:]
 
     // MARK: Event Handling
     
-    override func sendEvent(event: UIEvent) {
+    override func sendEvent(_ event: UIEvent) {
         
-        if event.type == .Touches {
-            
-            if let allTouches = event.touchesForWindow(self) {
-                
+        if event.type == .touches {
+            if let allTouches = event.touches(for: self) {
                 for touch in allTouches {
                     switch touch.phase {
-                    case .Began:
-                        self.handleTouchBegan(touch)
-                    case .Moved:
-                        self.handleTouchMoved(touch)
-                    case .Cancelled:
-                        self.handleTouchCancelled(touch)
-                    case .Ended:
-                        self.handleTouchEnded(touch)
-                    case .Stationary:
+                    case .began:
+                        handleTouchBegan(touch)
+                    case .moved:
+                        handleTouchMoved(touch)
+                    case .cancelled:
+                        handleTouchCancelled(touch)
+                    case .ended:
+                        handleTouchEnded(touch)
+                    case .stationary:
                         break
                     }
                 }
@@ -42,57 +38,62 @@ class PreviewWindow: UIWindow {
 
     // MARK: Capture 3D Touch Availability
     
-    override func traitCollectionDidChange(previousTraitCollection: UITraitCollection?) {
-        self.forceTouchAvailable = self.traitCollection.forceTouchCapability == .Available
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        forceTouchAvailable = traitCollection.forceTouchCapability == .available
     }
     
     // MARK: Preview Window Touch Handling (Private)
     
-    private func handleTouchBegan(touch: UITouch) {
+    fileprivate func handleTouchBegan(_ touch: UITouch) {
 
         // create a view for the touch
-        let startingPoint = touch.locationInView(self)
-        let touchView = self.touchViewWithInitialStartingPoint(startingPoint)
+        let startingPoint = touch.location(in: self)
+        let touchView = self.touchView(withInitialStartingPoint: startingPoint)
         
         // track the touch + view so we can get it later
-        self.touchesToViews[touch] = touchView
-        self.addSubview(touchView)
+        touchesToViews[touch] = touchView
+        addSubview(touchView)
 
         // fade and scale it in for a "nice" effect
         touchView.alpha = 0.0
-        UIView.animateWithDuration(0.1, animations: {
+        
+        // scaling it up first makes it appear as if it's dropping on to the screen
+        // when we animate back to its identity.
+        touchView.transform = CGAffineTransform(scaleX: 1.20, y: 1.20)
+        
+        UIView.animate(withDuration: 0.1, animations: {
             touchView.alpha = 1.0
-            touchView.transform = CGAffineTransformIdentity
+            touchView.transform = CGAffineTransform.identity
         })
     }
 
-    private func handleTouchMoved(touch: UITouch) {
-        if let touchView = self.touchesToViews[touch] {
+    fileprivate func handleTouchMoved(_ touch: UITouch) {
+        if let touchView = touchesToViews[touch] {
             
             // 3D touch handling, if available
-            if self.forceTouchAvailable {
+            if forceTouchAvailable {
                 let scale = ((touch.force / touch.maximumPossibleForce) * 4.0) + 1
-                touchView.transform = CGAffineTransformMakeScale(scale, scale)
+                touchView.transform = CGAffineTransform(scaleX: scale, y: scale)
             }
             
             // reposition the view under the touch
-            touchView.center = touch.locationInView(self)
+            touchView.center = touch.location(in: self)
         }
     }
 
-    private func handleTouchCancelled(touch: UITouch) {
-        self.handleTouchEnded(touch)
+    fileprivate func handleTouchCancelled(_ touch: UITouch) {
+        handleTouchEnded(touch)
     }
 
-    private func handleTouchEnded(touch: UITouch) {
+    fileprivate func handleTouchEnded(_ touch: UITouch) {
 
-        if let touchView = self.touchesToViews[touch] {
+        if let touchView = touchesToViews[touch] {
 
             // fade and scale it out for a "nice" effect
-            UIView.animateWithDuration(0.1, animations: {
+            UIView.animate(withDuration: 0.1, animations: {
                 touchView.alpha = 0.0
-                touchView.transform = CGAffineTransformMakeScale(1.20, 1.20)
-            }, completion: { (Bool) in
+                touchView.transform = CGAffineTransform(scaleX: 1.20, y: 1.20)
+            }, completion: { (_) in
                 touchView.removeFromSuperview()
                 self.touchesToViews[touch] = nil
             })
@@ -101,23 +102,22 @@ class PreviewWindow: UIWindow {
     
     // MARK: View Creation
     
-    private func touchViewWithInitialStartingPoint(startingPoint: CGPoint) -> UIView {
+    fileprivate func touchView(withInitialStartingPoint startingPoint: CGPoint) -> UIView {
         let touchView = UIView(frame: CGRect(x: 0, y: 0, width: 38, height: 38))
 
         touchView.center = startingPoint
-        touchView.transform = CGAffineTransformMakeScale(1.20, 1.20)
         
         // set up layout
         let layer = touchView.layer
-        layer.contentsScale = UIScreen.mainScreen().scale
+        layer.contentsScale = UIScreen.main.scale
         layer.cornerRadius = touchView.bounds.width / 2.0
         layer.borderWidth = 1.0
 
         // configure color
-        var backgroundColor = UIColor.lightGrayColor()
-        backgroundColor = backgroundColor.colorWithAlphaComponent(0.7)
+        var backgroundColor = UIColor.lightGray
+        backgroundColor = backgroundColor.withAlphaComponent(0.7)
         touchView.backgroundColor = backgroundColor
-        layer.borderColor = UIColor.darkGrayColor().CGColor
+        layer.borderColor = UIColor.darkGray.cgColor
         
         return touchView
     }
