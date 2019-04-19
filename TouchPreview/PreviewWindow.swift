@@ -28,6 +28,8 @@ class PreviewWindow: UIWindow {
                         handleTouchEnded(touch)
                     case .stationary:
                         break
+                    @unknown default:
+                        break
                     }
                 }
             }
